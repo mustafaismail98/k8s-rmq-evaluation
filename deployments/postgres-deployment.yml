@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-deployment
+  namespace: mustafa-ismail
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:12.0-alpine
+          env:
+            - name: DATABASE_CLIENT
+              value: postgres
+            - name: DATABASE_HOST
+              value: postgres-db-service.mustafa-ismail.svc.cluster.local
+            - name: DATABASE_PORT
+              value: "5432"
+            - name: DATABASE_NAME
+              value: count
+            - name: DATABASE_USERNAME
+              value: postgres
+            - name: DATABASE_PASSWORD
+              value: "123"
+            - name: DATABASE_SSL
+              value: "false"
+            - name: JWT_SECRET
+              value: rLs30+wF8nseCE06Fwdv/Q==
+            - name: ADMIN_JWT_SECRET
+              value: 8wX2jZ0mhlYVOU8/gkF5HQ==
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: count-data
+          resources:
+            requests:
+              cpu: 1
+              memory: 2Gi
+      volumes:
+        - name: count-data
+          emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-db-service
+  namespace: mustafa-ismail
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  
+
+
