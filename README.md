@@ -1,98 +1,69 @@
-# Examen
+Projet Kubernetes - Evaluation 
 
-## Prérequis
+# Introduction
 
-Récupérer le fichier kubeconfig.yml
+J'ai commencé par ses étapes : 
+- Configurer KubeConfig
+- Préparation des images docker pour le sender,reciver, postgres et les pousser dans registry hub 
+- Construire les fichiers de déploiements pour les service backend (sender/reciver)
+- Construire le fichier de déploiements pour la base de donnée Postgres
+- Construire le fichiers de déploiements pour rabbitMq
+- Construire les fichiers de Job pour créer la base de données et la migration
+- Construire un fichier de HPA auto scaling pour le service reciver
 
-```SH
-export KUBECONFIG=<absolute-path-to>/kubeconfig.yml
-```
+# Expliquation des service sender et reciver
 
-Vous allez utiliser un cluster distant, il ne faut donc pas utiliser de commandes commençant par `minikube`.
+Sender Service:
+    Service responsable d'envoyer des messages à RabbitMQ.
+    Connecté à RabbitMQ pour l'envoi de messages.
+    Configuré avec un intervalle d'envoi défini.
 
-## Tâches
+Reciver Service:
+    Service responsable de récupérer des messages depuis RabbitMQ.
+    Connecté à RabbitMQ pour la récupération de messages.
+    Connecté à la base de données PostgreSQL pour enregistrer les données reçues.
+    Configuré pour écouter RabbitMQ.
 
-Vous allez travailler tous sur le même cluster. Il est donc important de créer un namespace pour chacun et de nommer vos ressources avec des noms identifiables.
+## Configuration de l'Application
 
-C'est également important pour les `labels selector` pour éviter les collisions entre le travail de deux élèves.
-(un service qui cible des pods de deux personnes par exemple).
+### Sender Service:
 
-### Images docker
+    RABBITMQ_URL: URL de RabbitMQ.
+    QUEUE: Nom de la file d'attente RabbitMQ.
+    INTERVAL: Intervalle d'envoi des messages.
+    DATABASE_POSTGRES: Paramètres de connexion à la base de données PostgreSQL.
 
-Pour utiliser vos images docker dans le cluster il est conseillé d'utiliser un registre docker distant.
+### Reciver Service:
 
-Comme dockerhub, une version publique de l'image fera l'affaire.
+    RABBITMQ_URL: URL de RabbitMQ.
+    QUEUE: Nom de la file d'attente RabbitMQ.
+    DATABASE_POSGTRES: Paramètres de connexion à la base de données PostgreSQL.
 
-### Le projet
 
-Le code fourni est un code de serveur en `Node.js` permettant de compter des occurences à partir d'une queue `RabbitMQ` et de stocker la valeurs courantes dans une base de données `PostgreSQL`.
+## Pods 
+Voici mes pods 
+![Texte Alternatif](images/pods.png)
 
-Pour démarrer le serveur vous devez lui fournir les configurations adéquates dans les variables d'environment. (cf .env d'exemple).
 
-### RabbitMQ
 
-Comme spécifié dans <a href="https://github.com/arthurescriou/k8s-exercice-eda" >l'exercice </a> précédent, déployez RabbitMQ sur le cluster.
+## Configuration du HPA (Horizontal Pod Autoscaler)
 
-### PostgreSQL
+### Un HPA a été configuré pour le service Reciver afin de mettre à l'échelle automatiquement les pods en fonction de l'utilisation CPU.
+    Min Replicas: 1
+    Max Replicas: 10
+    Target CPU Utilization: 10%
 
-Vous devez déployer la base Postres comme spécifié dans le dossier `database`.
+![Texte Alternatif](images/hpa.png)
 
-### Serveur
 
-Fourni dans le dossier `backend`.
 
-Vous devez créer un déploiement pour lancer un pod de serveur en suivant les instructions.
+## Vérification:
+- Je me suis assuré que tous les pods sont en cours d'executions. 
+- Je me suis assuré que les deux services se communiquent bien à travers Rabbitmq
+- Je me suis assuré que les service reciver est bien connecté à la base Postgres
 
-Une fois le serveur fonctionnel ajoutez un autoscaler pour qu'il suive la charge.
+Assurez-vous que tous les pods sont en cours d'exécution en utilisant la commande kubectl get pods -n mustafa-ismail.
 
-### Tester l'application
+![Texte Alternatif](images/resultat.png)
 
-Vous avez à votre disposition un script: `count.js` dans le dossier du serveur.
 
-Veillez à configurer les variables d'environment pour le lancer.
-
-Vous devez créer un compteur dans votre base pour l'utiliser et spécifier son uuid :
-
-```bash
-curl localhost:4040/count/create -X POST
-```
-
-## Rendu
-
-Veuillez regrouper tous vos fichiers yaml de déploiement (et ou commande lancées en bash) dans un repository git muni d'un readme.md.
-
-Pousser le repository en ligne (github, gitlab etc).
-Et m'envoyer le lien par mail (cela peut être fait en debut d'examen, je regarderai la dernière version poussée)
-
-## Commandes utiles
-
-Créer un namespace
-
-```bash
-kubectl create namespace <insert-namespace-name-here>
-```
-
-Visualiser les ressources déployées
-
-```bash
-kubectl get pods --namespace=name
-kubectl get services --namespace=name
-kubectl get deployments --namespace=name
-kubectl get namespace --namespace=name
-```
-
-Récupérer les log d'un pod
-
-```bash
-kubectl logs <pod-id>
-```
-
-Utiliser un fichier yaml, dans votre cas l'image docker ne devrais pas changer donc il est possible de seulement apply le yaml une fois créé
-
-Pensez à nommer votre yaml avec votre nom (et pas juste pod.yaml, pour éviter les collisions)
-
-```bash
-kubectl create -f file.yaml
-kubectl delete -f file.yaml
-kubectl apply -f file.yaml
-```
