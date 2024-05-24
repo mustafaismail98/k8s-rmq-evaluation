@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: receiver-deployment
+  namespace: mustafa-ismail
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: receiver 
+  template:
+    metadata:
+      labels:
+        app: receiver 
+    spec:
+      containers:
+      - name: receiver
+        image: mustafais/reciver
+        ports:
+        - containerPort: 4040
+        resources:
+          requests:
+            cpu: 100m 
+        env:
+        - name: PORT
+          value: "4040"
+        - name: PGHOST
+          value: "postgres-db-service.mustafa-ismail.svc.cluster.local"
+        - name: PGUSER
+          value: "postgres"
+        - name: PGDATABASE
+          value: "count"
+        - name: PGPORT
+          value: "5432"
+        - name: PGPASSWORD
+          value: "123"
+        - name: RABBITMQ_URL
+          value: "amqp://rabbitmq.mustafa-ismail.svc.cluster.local:5672"
+        - name: QUEUE
+          value: "count"
+        - name: INTERVAL
+          value: "1000"
+        - name: COUNT
+          value: "48832f6c-b778-4181-bf79-fffc4816cd43"
+        - name: JWT_SECRET
+          value: rLs30+wF8nseCE06Fwdv/Q==
+        - name: ADMIN_JWT_SECRET
+          value: 8wX2jZ0mhlYVOU8/gkF5HQ==
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reciver-service
+  namespace: mustafa-ismail
+spec:
+  selector:
+    app: receiver
+  ports:
+  - protocol: TCP
+    port: 4040
+    targetPort: 4040
+  type: LoadBalancer
