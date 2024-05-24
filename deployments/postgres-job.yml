@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-db-job
+  namespace: mustafa-ismail
+spec:
+  template:
+    metadata:
+      name: create-db
+    spec:
+      containers:
+        - name: postgres-client
+          image: postgres:12.0-alpine
+          env:
+            - name: PGPASSWORD
+              value: "123"
+          command: ["/bin/sh"]
+          args:
+            - "-c"
+            - >
+              psql -h postgres-db-service.mustafa-ismail.svc.cluster.local -U postgres -c
+              "CREATE DATABASE \"count\" WITH OWNER = postgres
+              ENCODING = 'UTF8';"
+
+
+      restartPolicy: Never
