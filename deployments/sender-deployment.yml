@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sender-deployment
+  namespace: mustafa-ismail
+spec:
+  replicas: 
+  selector:
+    matchLabels:
+      app: sender
+  template:
+    metadata:
+      labels:
+        app: sender
+    spec:
+      containers:
+      - name: sender
+        image: mustafais/count
+        ports:
+        - containerPort: 4040
+        env:
+        - name: RABBITMQ_URL
+          value: "amqp://rabbitmq.mustafa-ismail.svc.cluster.local:5672"
+        - name: QUEUE
+          value: "count"
+        - name: INTERVAL
+          value: "1"
+        - name: COUNT
+          value: "48832f6c-b778-4181-bf79-fffc4816cd43"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sender-service
+  namespace: mustafa-ismail
+spec:
+  selector:
+    app: sender
+  ports:
+  - protocol: TCP
+    port: 4040
+    targetPort: 4040
