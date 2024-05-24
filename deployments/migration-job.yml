@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migration-job
+  namespace: mustafa-ismail
+spec:
+  template:
+    metadata:
+      name: migration-pod
+    spec:
+      containers:
+        - name: migration-container
+          image: mustafais/count
+          command: ["/bin/sh"]
+          args: ["-c", "yarn migrate"]
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:123@postgres-db-service.mustafa-ismail.svc.cluster.local:5432/count"
+      restartPolicy: Never
